@@ -132,13 +132,14 @@ export function RightSidebar({
   // Find all connections for this node with their types
   const connectedNodeIds = new Map<string, string | undefined>();
   graphData.links.forEach((link) => {
-    if (link.source === selectedNode.id) {
-      const targetId =
-        typeof link.target === "string" ? link.target : link.target;
+    const sourceId =
+      typeof link.source === "string" ? link.source : (link.source as any).id;
+    const targetId =
+      typeof link.target === "string" ? link.target : (link.target as any).id;
+
+    if (sourceId === selectedNode.id) {
       connectedNodeIds.set(targetId, link.type);
-    } else if (link.target === selectedNode.id) {
-      const sourceId =
-        typeof link.source === "string" ? link.source : link.source;
+    } else if (targetId === selectedNode.id) {
       connectedNodeIds.set(sourceId, link.type);
     }
   });
@@ -152,15 +153,19 @@ export function RightSidebar({
 
   const hasDirectConnection =
     relationshipNode &&
-    graphData.links.some(
-      (link) =>
-        (link.source === selectedNode.id &&
-          link.target === relationshipNode.id) ||
-        (link.source === relationshipNode.id && link.target === selectedNode.id)
-    );
+    graphData.links.some((link) => {
+      const sourceId =
+        typeof link.source === "string" ? link.source : (link.source as any).id;
+      const targetId =
+        typeof link.target === "string" ? link.target : (link.target as any).id;
+      return (
+        (sourceId === selectedNode.id && targetId === relationshipNode.id) ||
+        (sourceId === relationshipNode.id && targetId === selectedNode.id)
+      );
+    });
 
   return (
-    <aside className="px-4 h-full">
+    <aside className="px-4 h-full flex flex-col">
       <button
         onClick={onLogout}
         className="h-8 px-3 text-xs cursor-pointer ml-auto my-4 rounded-lg bg-white hover:bg-red-50 hover:text-red-600 transition-colors flex items-center gap-1"
@@ -168,7 +173,7 @@ export function RightSidebar({
         <LogOut size={14} />
         Logout
       </button>
-      <div className="w-80 bg-white rounded-xl overflow-y-auto flex flex-col">
+      <div className="w-80 bg-white rounded-xl overflow-y-auto flex flex-col flex-1">
         <div className="p-6 border-b border-border sticky top-0 bg-white z-10">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-foreground">Details</h2>
