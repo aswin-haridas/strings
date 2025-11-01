@@ -1,65 +1,59 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Plus } from "lucide-react"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Plus } from "lucide-react";
 
 interface LeftSidebarProps {
-  onAddNode: (name: string, bio?: string) => void
-  onAddConnection: (source: string, target: string, strength?: number) => void
+  onAddNode: (name: string, bio?: string) => void;
+  onAddConnection: (source: string, target: string, strength?: number) => void;
 }
 
 export function LeftSidebar({ onAddNode, onAddConnection }: LeftSidebarProps) {
-  const [nodeName, setNodeName] = useState("")
-  const [nodeBio, setNodeBio] = useState("")
+  const [nodeName, setNodeName] = useState("");
+  const [nodeBio, setNodeBio] = useState("");
 
-  const [sourceName, setSourceName] = useState("")
-  const [targetName, setTargetName] = useState("")
-  const [strength, setStrength] = useState("1")
+  const [sourceName, setSourceName] = useState("");
+  const [targetName, setTargetName] = useState("");
 
   const handleAddNode = () => {
     if (nodeName.trim()) {
-      onAddNode(nodeName, nodeBio || undefined)
-      setNodeName("")
-      setNodeBio("")
+      onAddNode(nodeName, nodeBio || undefined);
+      setNodeName("");
+      setNodeBio("");
     }
-  }
+  };
 
   const handleAddConnection = () => {
     if (sourceName.trim() && targetName.trim()) {
-      onAddConnection(sourceName, targetName, Number.parseFloat(strength))
-      setSourceName("")
-      setTargetName("")
-      setStrength("1")
+      onAddConnection(sourceName, targetName);
+      setSourceName("");
+      setTargetName("");
     }
-  }
+  };
 
   return (
     <div className="w-80 bg-white border-r border-border overflow-y-auto flex flex-col shadow-sm">
-      <div className="p-6 border-b border-border sticky top-0 bg-white">
-        <div className="flex items-center gap-3 mb-2">
-          <div className="w-7 h-7 rounded-lg bg-crail text-white flex items-center justify-center">
-            <Plus size={16} />
-          </div>
-          <h2 className="text-lg font-semibold text-foreground">Tools</h2>
-        </div>
-        <p className="text-xs text-muted-foreground">Add people and connections</p>
-      </div>
-
       <Tabs defaultValue="nodes" className="flex-1 flex flex-col">
-        <TabsList className="w-full rounded-none border-b border-border bg-pampas">
+        <TabsList className="w-full h-12 rounded-none border-b border-border bg-pampas p-0">
           <TabsTrigger
             value="nodes"
-            className="flex-1 rounded-none data-[state=active]:bg-white data-[state=active]:border-b-2 data-[state=active]:border-crail"
+            className="flex-1 h-full rounded-none border-b-2 border-transparent data-[state=active]:bg-white data-[state=active]:border-crail data-[state=active]:text-crail data-[state=active]:shadow-sm transition-all"
           >
             People
           </TabsTrigger>
           <TabsTrigger
             value="connections"
-            className="flex-1 rounded-none data-[state=active]:bg-white data-[state=active]:border-b-2 data-[state=active]:border-crail"
+            className="flex-1 h-full rounded-none border-b-2 border-transparent data-[state=active]:bg-white data-[state=active]:border-crail data-[state=active]:text-crail data-[state=active]:shadow-sm transition-all"
           >
             Connections
           </TabsTrigger>
@@ -69,12 +63,18 @@ export function LeftSidebar({ onAddNode, onAddConnection }: LeftSidebarProps) {
         <TabsContent value="nodes" className="flex-1 p-6 gap-4 flex flex-col">
           <Card className="border-border bg-pampas rounded-2xl shadow-none">
             <CardHeader className="pb-4">
-              <CardTitle className="text-base text-foreground font-semibold">Add Person</CardTitle>
-              <CardDescription className="text-xs">Create a new person in the network</CardDescription>
+              <CardTitle className="text-base text-foreground font-semibold">
+                Add Person
+              </CardTitle>
+              <CardDescription className="text-xs">
+                Create a new person in the network
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <label className="text-xs font-medium text-foreground block mb-2">Name *</label>
+                <label className="text-xs font-medium text-foreground block mb-2">
+                  Name *
+                </label>
                 <Input
                   placeholder="e.g., John Doe"
                   value={nodeName}
@@ -84,7 +84,9 @@ export function LeftSidebar({ onAddNode, onAddConnection }: LeftSidebarProps) {
                 />
               </div>
               <div>
-                <label className="text-xs font-medium text-foreground block mb-2">Bio</label>
+                <label className="text-xs font-medium text-foreground block mb-2">
+                  Bio
+                </label>
                 <Input
                   placeholder="e.g., Software Engineer"
                   value={nodeBio}
@@ -96,7 +98,6 @@ export function LeftSidebar({ onAddNode, onAddConnection }: LeftSidebarProps) {
                 onClick={handleAddNode}
                 disabled={!nodeName.trim()}
                 className="w-full bg-crail text-white rounded-lg hover:bg-crail/90 font-medium"
-                size="sm"
               >
                 Add Person
               </Button>
@@ -105,15 +106,24 @@ export function LeftSidebar({ onAddNode, onAddConnection }: LeftSidebarProps) {
         </TabsContent>
 
         {/* Add Connection Tab */}
-        <TabsContent value="connections" className="flex-1 p-6 gap-4 flex flex-col">
+        <TabsContent
+          value="connections"
+          className="flex-1 p-6 gap-4 flex flex-col"
+        >
           <Card className="border-border bg-pampas rounded-2xl shadow-none">
             <CardHeader className="pb-4">
-              <CardTitle className="text-base text-foreground font-semibold">Add Connection</CardTitle>
-              <CardDescription className="text-xs">Connect two people in the network</CardDescription>
+              <CardTitle className="text-base text-foreground font-semibold">
+                Add Connection
+              </CardTitle>
+              <CardDescription className="text-xs">
+                Connect two people in the network
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <label className="text-xs font-medium text-foreground block mb-2">From Person *</label>
+                <label className="text-xs font-medium text-foreground block mb-2">
+                  From Person *
+                </label>
                 <Input
                   placeholder="e.g., Alice"
                   value={sourceName}
@@ -122,7 +132,9 @@ export function LeftSidebar({ onAddNode, onAddConnection }: LeftSidebarProps) {
                 />
               </div>
               <div>
-                <label className="text-xs font-medium text-foreground block mb-2">To Person *</label>
+                <label className="text-xs font-medium text-foreground block mb-2">
+                  To Person *
+                </label>
                 <Input
                   placeholder="e.g., Bob"
                   value={targetName}
@@ -130,23 +142,10 @@ export function LeftSidebar({ onAddNode, onAddConnection }: LeftSidebarProps) {
                   className="text-sm rounded-lg border-border bg-white"
                 />
               </div>
-              <div>
-                <label className="text-xs font-medium text-foreground block mb-2">Strength (0.1 - 1.0)</label>
-                <Input
-                  type="number"
-                  min="0.1"
-                  max="1"
-                  step="0.1"
-                  value={strength}
-                  onChange={(e) => setStrength(e.target.value)}
-                  className="text-sm rounded-lg border-border bg-white"
-                />
-              </div>
               <Button
                 onClick={handleAddConnection}
                 disabled={!sourceName.trim() || !targetName.trim()}
                 className="w-full bg-crail text-white rounded-lg hover:bg-crail/90 font-medium"
-                size="sm"
               >
                 Create Connection
               </Button>
@@ -155,5 +154,5 @@ export function LeftSidebar({ onAddNode, onAddConnection }: LeftSidebarProps) {
         </TabsContent>
       </Tabs>
     </div>
-  )
+  );
 }
