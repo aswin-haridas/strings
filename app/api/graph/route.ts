@@ -1,22 +1,30 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/neo4j";
 
-export async function GET() {
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const userName = searchParams.get("userName");
+
+  if (!userName) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const session = await getSession();
 
   try {
-    // Fetch all nodes and relationships
-    const result = await session.run(`
-      MATCH (n:Person)
-      OPTIONAL MATCH (n)-[r:CONNECTED_TO]->(m:Person)
-      RETURN n, r, m
-    `);
+    // Fetch only the logged-in user and their connections
+    const result = await session.run(
+      `MATCH (user:Person {name: $userName})
+       OPTIONAL MATCH (user)-[r:CONNECTED_TO]->(m:Person)
+       RETURN user, r, m`,
+      { userName }
+    );
 
     const nodesMap = new Map();
     const links: any[] = [];
 
     result.records.forEach((record) => {
-      const node = record.get("n");
+      const node = record.get("user");
       if (node) {
         const nodeId = node.identity.toString();
         if (!nodesMap.has(nodeId)) {
@@ -48,6 +56,7 @@ export async function GET() {
           source: sourceId,
           target: targetId,
           strength: relationship.properties.strength || 1,
+          type: relationship.properties.type || null,
         });
 
         // Update connection counts

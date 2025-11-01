@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { LeftSidebar } from "@/components/left-sidebar";
 import { GraphVisualization } from "@/components/graph-visualization";
 import { RightSidebar } from "@/components/right-sidebar";
@@ -27,6 +28,7 @@ export interface GraphLink {
   source: string;
   target: string;
   strength?: number;
+  type?: string;
 }
 
 export interface GraphData {
@@ -34,7 +36,15 @@ export interface GraphData {
   links: GraphLink[];
 }
 
+export interface User {
+  id: string;
+  name: string;
+  bio?: string;
+}
+
 export default function Home() {
+  const router = useRouter();
+  const [user, setUser] = useState<User | null>(null);
   const [graphData, setGraphData] = useState<GraphData>({
     nodes: [],
     links: [],
@@ -52,6 +62,16 @@ export default function Home() {
     strokeColor: "#FFFFFF",
   };
   const graphRef = useRef<HTMLDivElement | null>(null);
+
+  // Check authentication
+  useEffect(() => {
+    const userName = localStorage.getItem("userName");
+    if (userName) {
+      setUser({ id: userName, name: userName });
+    } else {
+      router.push("/login");
+    }
+  }, [router]);
 
   // Filter graph data to show only main person and their connections
   const filteredGraphData = mainPerson
@@ -92,13 +112,19 @@ export default function Home() {
 
   // Fetch graph data from Neo4j
   const fetchGraphData = async () => {
+    if (!user) return;
+
     try {
       setLoading(true);
-      const response = await fetch("/api/graph");
-      const data = await response.json();
-      setGraphData(data);
-      if (data.nodes.length > 0 && !selectedNode) {
-        setSelectedNode(data.nodes[0]);
+      const response = await fetch(
+        `/api/graph?userName=${encodeURIComponent(user.name)}`
+      );
+      if (response.ok) {
+        const data = await response.json();
+        setGraphData(data);
+        if (data.nodes.length > 0 && !selectedNode) {
+          setSelectedNode(data.nodes[0]);
+        }
       }
     } catch (error) {
       console.error("Error fetching graph data:", error);
@@ -108,8 +134,10 @@ export default function Home() {
   };
 
   useEffect(() => {
-    fetchGraphData();
-  }, []);
+    if (user) {
+      fetchGraphData();
+    }
+  }, [user]);
 
   const addNode = async (name: string, bio?: string) => {
     try {
@@ -128,15 +156,22 @@ export default function Home() {
   };
 
   const addConnection = async (
-    sourceName: string,
     targetName: string,
-    strength = 1
+    strength = 1,
+    type?: string
   ) => {
+    if (!user) return;
+
     try {
       const response = await fetch("/api/connections", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sourceName, targetName, strength }),
+        body: JSON.stringify({
+          userName: user.name,
+          targetName,
+          strength,
+          type,
+        }),
       });
 
       if (response.ok) {
@@ -147,14 +182,17 @@ export default function Home() {
     }
   };
 
-  if (loading) {
+  const handleLogout = () => {
+    localStorage.removeItem("userName");
+    router.push("/login");
+  };
+
+  if (!user || loading) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-pampas">
         <div className="text-center">
           <div className="w-12 h-12 border-4 border-crail border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-muted-foreground">
-            Loading graph data from Neo4j...
-          </p>
+          <p className="text-muted-foreground">Loading...</p>
         </div>
       </div>
     );
@@ -163,29 +201,14 @@ export default function Home() {
   return (
     <div className="flex h-screen w-full overflow-hidden bg-pampas">
       {/* Left Sidebar */}
-      <LeftSidebar onAddNode={addNode} onAddConnection={addConnection} />
+      <LeftSidebar
+        onAddNode={addNode}
+        onAddConnection={addConnection}
+        currentUser={user}
+      />
 
       {/* Center Graph Visualization */}
       <div className="flex-1 flex flex-col bg-pampas">
-        <div className="p-3 border-b border-border bg-white shadow-sm">
-          <p className="text-sm text-muted-foreground ">
-            {filteredGraphData.nodes.length} people •{" "}
-            {filteredGraphData.links.length} connections
-            {mainPerson && (
-              <span className="ml-4 text-crail font-medium">
-                Centered on: {mainPerson.name}
-              </span>
-            )}
-            {relationshipNode &&
-              selectedNode &&
-              relationshipNode.id !== selectedNode.id &&
-              !mainPerson && (
-                <span className="ml-4 text-crail font-medium">
-                  Showing path: {selectedNode.name} → {relationshipNode.name}
-                </span>
-              )}
-          </p>
-        </div>
         <div className="flex-1 relative overflow-hidden" ref={graphRef}>
           <GraphVisualization
             data={filteredGraphData}
@@ -207,6 +230,8 @@ export default function Home() {
         graphData={graphData}
         onSetMainPerson={handleSetMainPerson}
         mainPerson={mainPerson}
+        currentUser={user}
+        onLogout={handleLogout}
       />
     </div>
   );

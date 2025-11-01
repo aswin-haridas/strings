@@ -27,6 +27,8 @@ export function GraphVisualization({
 }: GraphVisualizationProps) {
   const svgRef = useRef<SVGSVGElement>(null);
 
+  console.log("running")
+
   useEffect(() => {
     if (!svgRef.current || !containerRef.current) return;
 

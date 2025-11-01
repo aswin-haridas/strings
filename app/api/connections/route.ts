@@ -5,18 +5,26 @@ export async function POST(request: Request) {
   const session = await getSession();
 
   try {
-    const { sourceName, targetName, strength } = await request.json();
+    const { userName, targetName, strength, type } = await request.json();
 
+    if (!userName) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Create connection from logged-in user to target
     const result = await session.run(
-      `MATCH (source:Person {name: $sourceName})
-       MATCH (target:Person {name: $targetName})
-       MERGE (source)-[r:CONNECTED_TO {strength: $strength}]->(target)
+      `MERGE (source:Person {name: $userName})
+       MERGE (target:Person {name: $targetName})
+       MERGE (source)-[r:CONNECTED_TO {strength: $strength, type: $type}]->(target)
        RETURN source, target, r`,
-      { sourceName, targetName, strength: strength || 1 }
+      { userName, targetName, strength: strength || 1, type: type || null }
     );
 
     if (result.records.length === 0) {
-      return NextResponse.json({ error: "Nodes not found" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Failed to create connection" },
+        { status: 404 }
+      );
     }
 
     const source = result.records[0].get("source");
@@ -27,6 +35,7 @@ export async function POST(request: Request) {
       source: source.identity.toString(),
       target: target.identity.toString(),
       strength: relationship.properties.strength,
+      type: relationship.properties.type,
     });
   } catch (error) {
     console.error("Error creating connection:", error);
