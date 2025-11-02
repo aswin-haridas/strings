@@ -14,6 +14,7 @@ interface GraphVisualizationProps {
   relationshipNode: GraphNode | null;
   containerRef: React.RefObject<HTMLDivElement | null>;
   nodeStyle: NodeStyle;
+  currentUserName?: string;
 }
 
 export function GraphVisualization({
@@ -45,6 +46,43 @@ export function GraphVisualization({
       .attr("height", height)
       .attr("viewBox", [0, 0, width, height]);
 
+    // Build parent-child relationships from links
+    const childrenByParent = new Map<string, GraphNode[]>();
+    const parentByChild = new Map<string, GraphNode>();
+
+    data.links.forEach((link: any) => {
+      const sourceId =
+        typeof link.source === "object" ? link.source.id : link.source;
+      const targetId =
+        typeof link.target === "object" ? link.target.id : link.target;
+
+      const sourceNode = data.nodes.find((n) => n.id === sourceId);
+      const targetNode = data.nodes.find((n) => n.id === targetId);
+
+      if (sourceNode && targetNode) {
+        if (!childrenByParent.has(sourceId)) {
+          childrenByParent.set(sourceId, []);
+        }
+        childrenByParent.get(sourceId)!.push(targetNode);
+        parentByChild.set(targetId, sourceNode);
+      }
+    });
+
+    // Initialize all child nodes at their parent's position
+    data.nodes.forEach((node: any) => {
+      const parent = parentByChild.get(node.id);
+      if (parent && parent.x !== undefined && parent.y !== undefined) {
+        node.x = parent.x;
+        node.y = parent.y;
+        node.fx = parent.x;
+        node.fy = parent.y;
+      } else {
+        // Root nodes start at center
+        node.x = width / 2;
+        node.y = height / 2;
+      }
+    });
+
     // Create simulation
     const simulation = d3
       .forceSimulation(data.nodes as any[])
@@ -57,7 +95,8 @@ export function GraphVisualization({
       )
       .force("charge", d3.forceManyBody().strength(-350))
       .force("center", d3.forceCenter(width / 2, height / 2))
-      .force("collision", d3.forceCollide().radius(nodeStyle.size + 20));
+      .force("collision", d3.forceCollide().radius(nodeStyle.size + 20))
+      .alpha(0); // Start paused
 
     const crailColor = "#C15F3C";
     const cloudyColor = "#B1ADA1";
@@ -129,6 +168,32 @@ export function GraphVisualization({
       .attr("fill", (d) => (d.degree === 2 ? "#374151" : "#FFFFFF"))
       .attr("pointer-events", "none");
 
+    // Pop out animation: release child nodes one by one
+    let popIndex = 0;
+    const allChildren: GraphNode[] = [];
+
+    // Collect all children in order
+    childrenByParent.forEach((children) => {
+      allChildren.push(...children);
+    });
+
+    const popInterval = setInterval(() => {
+      if (popIndex >= allChildren.length) {
+        clearInterval(popInterval);
+        return;
+      }
+
+      const child = allChildren[popIndex] as any;
+      // Release the fixed position so it can move freely
+      child.fx = null;
+      child.fy = null;
+
+      // Restart simulation with some energy
+      simulation.alpha(0.3).restart();
+
+      popIndex++;
+    }, 150); // Pop one child every 150ms
+
     // Update positions on simulation tick
     simulation.on("tick", () => {
       links
@@ -195,6 +260,7 @@ export function GraphVisualization({
 
     return () => {
       simulation.stop();
+      clearInterval(popInterval);
     };
   }, [
     data,
