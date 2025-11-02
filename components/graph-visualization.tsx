@@ -27,7 +27,7 @@ export function GraphVisualization({
 }: GraphVisualizationProps) {
   const svgRef = useRef<SVGSVGElement>(null);
 
-  console.log("running")
+  console.log("running");
 
   useEffect(() => {
     if (!svgRef.current || !containerRef.current) return;
@@ -111,8 +111,10 @@ export function GraphVisualization({
     nodeGroups
       .append("circle")
       .attr("r", nodeStyle.size)
-      .attr("fill", nodeStyle.color)
-      .attr("stroke", nodeStyle.strokeColor)
+      .attr("fill", (d) => (d.degree === 2 ? "#FFFFFF" : nodeStyle.color))
+      .attr("stroke", (d) =>
+        d.degree === 2 ? "#9CA3AF" : nodeStyle.strokeColor
+      )
       .attr("stroke-width", nodeStyle.strokeWidth)
       .attr("opacity", 1);
 
@@ -124,7 +126,7 @@ export function GraphVisualization({
       .attr("font-weight", "600")
       .attr("text-anchor", "middle")
       .attr("dominant-baseline", "middle")
-      .attr("fill", "#FFFFFF")
+      .attr("fill", (d) => (d.degree === 2 ? "#374151" : "#FFFFFF"))
       .attr("pointer-events", "none");
 
     // Update positions on simulation tick

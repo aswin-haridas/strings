@@ -11,6 +11,7 @@ export interface GraphNode {
   name: string;
   bio?: string;
   connections: number;
+  degree?: number;
   x?: number;
   y?: number;
   fx?: number | null;
